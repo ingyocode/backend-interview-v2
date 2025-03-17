@@ -1,29 +1,41 @@
 import { Body, Controller, Delete, Get, HttpException, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductRequestBodyDto, GetProductListRequestQueryDto, ProductIdRequestDto, UpdateProductRequestBodyDto } from './dtos/product.dto';
+import { CreateProductRequestBodyDto, GetProductListRequestQueryDto, GetProductResponseDto, LikeProductRequestBodyDto, ProductIdRequestDto, UpdateProductRequestBodyDto } from './dtos/product.dto';
 import { PaginationDto } from 'src/common/pagination.dto';
 import { ProductsEntity } from 'src/database/entities/products/products.entity';
 import { TokenInterface } from 'src/auth/interface/token.interface';
 import { UseUserAuthDecorator } from 'src/decorators/use-user-auth.decorator';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { LikeProductEnumType } from 'src/redis/interfaces/redis.type';
 
 @Controller('products')
 export class ProductsController {
   constructor(
-    private readonly productsService: ProductsService
+    private readonly productsService: ProductsService,
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'get product list',
+    description: 'get product list'
+  })
   async getProductList(
     @Query() query: GetProductListRequestQueryDto
-  ): Promise<PaginationDto<ProductsEntity[]>> {
+  ): Promise<PaginationDto<GetProductResponseDto[]>> {
     return this.productsService.getProductList(query);
   }
 
   @Get('/:productId')
+  @ApiOperation({
+    summary: 'get product',
+    description: 'get product'
+  })
+  @ApiOkResponse({
+    type: GetProductResponseDto
+  })
   async getProduct(
     @Param() params: ProductIdRequestDto
-  ): Promise<ProductsEntity> {
+  ): Promise<GetProductResponseDto> {
     return this.productsService.getProduct(params.productId)
   }
 
@@ -93,6 +105,19 @@ export class ProductsController {
     return await this.productsService.deleteProduct(param.productId)
   }
 
-  @Post('like')
-  async likeProduct() {}
+  @ApiOperation({
+    summary: 'like product',
+    description: 'like product'
+  })
+  @Post('like/:productId')
+  @UseUserAuthDecorator()
+  @ApiOkResponse({
+    type: Number
+  })
+  async likeProduct(
+    @Param() param: ProductIdRequestDto,
+    @Body() body: LikeProductRequestBodyDto
+  ): Promise<number> {
+    return this.productsService.likeProduct(param.productId, body.type)
+  }
 }

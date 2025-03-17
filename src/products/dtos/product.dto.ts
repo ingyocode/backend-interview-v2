@@ -1,7 +1,9 @@
 import { Type } from 'class-transformer';
-import { IsDefined, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsDefined, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { CreateProductInterface, GetProductRequestInterface, UpdateProductInterface } from '../interfaces/product.interface';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProductsEntity } from 'src/database/entities/products/products.entity';
+import { LikeProductEnumType } from 'src/redis/interfaces/redis.type';
 
 export class ProductIdRequestDto {
   @ApiProperty({
@@ -142,4 +144,68 @@ export class UpdateProductRequestBodyDto implements UpdateProductInterface {
   @IsOptional()
   @IsString()
   color: string;
+}
+
+export class GetProductResponseDto extends ProductsEntity {
+  @ApiProperty({
+    description: 'product id'
+  })
+  productId: number;
+
+  @ApiProperty({
+    description: 'product owner id'
+  })
+  ownerId: number;
+
+  @ApiProperty({
+    description: 'product name'
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'product description'
+  })
+  description: string;
+
+  @ApiProperty({
+    description: 'product brand'
+  })
+  brand: string;
+
+  @ApiProperty({
+    description: 'product price'
+  })
+  price: number;
+
+  @ApiProperty({
+    description: 'product size'
+  })
+  size: string;
+
+  @ApiProperty({
+    description: 'product color'
+  })
+  color: string;
+
+  @ApiProperty({
+    description: 'product created at'
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'product updated at'
+  })
+  updatedAt: Date;
+
+  @ApiProperty({ description: 'product like amount' })
+  likeAmount: number;
+}
+
+export class LikeProductRequestBodyDto {
+  @ApiProperty({
+    description: 'like or cancel',
+    enum: LikeProductEnumType
+  })
+  @IsEnum(LikeProductEnumType)
+  type: LikeProductEnumType;
 }

@@ -1,3 +1,5 @@
+import { ProductsEntity } from 'src/database/entities/products/products.entity';
+
 export interface GetProductRequestInterface {
   page: number;
   limit: number;

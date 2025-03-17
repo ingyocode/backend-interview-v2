@@ -4,23 +4,35 @@ import { ProductsEntity } from 'src/database/entities/products/products.entity';
 import { FindOptionsWhere, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateProductInterface, GetProductRequestInterface, UpdateProductInterface } from './interfaces/product.interface';
 import { PaginationDto } from 'src/common/pagination.dto';
+import { RedisService } from 'src/redis/redis.service';
+import { GetProductResponseDto } from './dtos/product.dto';
+import { LikeProductEnumType } from 'src/redis/interfaces/redis.type';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(ProductsEntity)
-    private readonly productsRepository: Repository<ProductsEntity>
+    private readonly productsRepository: Repository<ProductsEntity>,
+    private readonly redisService: RedisService
   ) {}
 
   async getProduct(productId: number) {
-    return this.productsRepository.findOne({
-      where: {
-        productId
-      }
-    })
+    const [product, likeAmount] = await Promise.all([
+      this.productsRepository.findOne({
+        where: {
+          productId
+        }
+      }),
+      this.redisService.get(productId)
+    ]);
+
+    return {
+      ...product,
+      likeAmount: Number(likeAmount) || 0
+    }
   }
 
-  async getProductList(params: GetProductRequestInterface): Promise<PaginationDto<ProductsEntity[]>> {
+  async getProductList(params: GetProductRequestInterface): Promise<PaginationDto<GetProductResponseDto[]>> {
     let whereClause: FindOptionsWhere<ProductsEntity>[];
     if (params?.brand) {
       Object.assign(whereClause, {
@@ -57,7 +69,17 @@ export class ProductsService {
       const productList = await this.productsRepository.find({
         where: whereClause
       });
-      return new PaginationDto(productList, totalPage)
+      const likeAmountProductList = await Promise.all(
+        productList.map(async (product) => {
+          const likeAmount = await this.redisService.get(product.productId);
+
+          return {
+            ...product,
+            likeAmount: Number(likeAmount) || 0
+          }
+        })
+      )
+      return new PaginationDto(likeAmountProductList, totalPage)
   }
 
   async createProduct(userId: number, params: CreateProductInterface): Promise<ProductsEntity> {
@@ -77,7 +99,8 @@ export class ProductsService {
       return false;
     }
   }
-  async deleteProduct(productId: number) {
+
+  async deleteProduct(productId: number): Promise<boolean> {
     try {
       await this.productsRepository.delete({
         productId
@@ -86,5 +109,9 @@ export class ProductsService {
     } catch {
       return false;
     }
+  }
+
+  async likeProduct(productId: number, type: LikeProductEnumType): Promise<number> {
+    return this.redisService.update(productId, type)
   }
 }
