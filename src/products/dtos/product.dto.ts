@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { IsDefined, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
-import { CreateProductInterface, GetProductRequestInterface, UpdateProductInterface } from '../interfaces/product.interface';
+import { CreateProductInterface, GetProductOrderType, GetProductOrderValue, GetProductRequestInterface, UpdateProductInterface } from '../interfaces/product.interface';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductsEntity } from 'src/database/entities/products/products.entity';
 import { LikeProductEnumType } from 'src/redis/interfaces/redis.type';
@@ -34,6 +34,17 @@ export class GetProductListRequestQueryDto implements GetProductRequestInterface
   @Min(1)
   @Max(100)
   limit: number;
+
+  @ApiProperty({
+    description: 'order type - price | name | brand'
+  })
+  @IsDefined()
+  orderType: GetProductOrderType;
+
+  @ApiProperty({
+    description: 'order value - ASC | DESC'
+  })
+  orderValue: GetProductOrderValue
 
   @ApiPropertyOptional({
     description: 'product brand'

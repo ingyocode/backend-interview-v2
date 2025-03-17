@@ -67,7 +67,10 @@ export class ProductsService {
       }
 
       const productList = await this.productsRepository.find({
-        where: whereClause
+        where: whereClause,
+        order: {
+          [params.orderType]: params.orderValue
+        }
       });
       const likeAmountProductList = await Promise.all(
         productList.map(async (product) => {

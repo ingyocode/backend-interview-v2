@@ -3,6 +3,8 @@ import { ProductsEntity } from 'src/database/entities/products/products.entity';
 export interface GetProductRequestInterface {
   page: number;
   limit: number;
+  orderType: GetProductOrderType;
+  orderValue: GetProductOrderValue;
   brand?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -26,3 +28,6 @@ export interface UpdateProductInterface {
   size?: string;
   color?: string;
 }
+
+export type GetProductOrderType = 'price' | 'name' | 'brand';
+export type GetProductOrderValue = 'ASC' | 'DESC';
